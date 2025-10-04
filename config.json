@@ -1,0 +1,122 @@
+{
+    "indicator_parameters": {
+        "rsi": {
+            "period": 14
+        },
+        "macd": {
+            "fast_period": 12,
+            "slow_period": 26,
+            "signal_period": 9
+        },
+        "ema": {
+            "periods": [
+                12,
+                26
+            ]
+        },
+        "bollinger_bands": {
+            "period": 20,
+            "std_dev": 2.5
+        },
+        "volume_ma": {
+            "short_period": 5,
+            "long_period": 15
+        }
+    },
+    "thresholds": {
+        "rsi": {
+            "oversold": 45,
+            "overbought": 60
+        },
+        "volume": {
+            "ratio_long_min": 1.1,
+            "dryup_ratio_max": 0.9
+        },
+        "bollinger": {
+            "touch_tolerance": 0.03,
+            "low_volatility_width": 0.05
+        },
+        "macd": {
+            "min_histogram": -0.01
+        }
+    },
+    "signal_settings": {
+        "min_confluence_count": 1,
+        "ignore_low_volatility": false,
+        "min_signal_interval_minutes": 0
+    },
+    "strategies": [
+        {
+            "name": "full_confluence_long",
+            "enabled": true,
+            "direction": "long",
+            "signal": "STRONG BUY",
+            "conditions": [
+                "rsi_oversold",
+                "macd_bullish_cross",
+                "ema_bullish",
+                "price_touch_lower_band",
+                "volume_spike"
+            ],
+            "min_confluence": 2
+        },
+        {
+            "name": "full_confluence_short",
+            "enabled": true,
+            "direction": "short",
+            "signal": "STRONG SELL",
+            "conditions": [
+                "rsi_overbought",
+                "macd_bearish_cross",
+                "ema_bearish",
+                "price_touch_upper_band",
+                "volume_spike"
+            ],
+            "min_confluence": 2
+        },
+        {
+            "name": "macd_bollinger_long",
+            "enabled": true,
+            "direction": "long",
+            "signal": "BUY",
+            "conditions": [
+                "macd_bullish_cross",
+                "price_touch_lower_band"
+            ],
+            "min_confluence": 1
+        },
+        {
+            "name": "macd_bollinger_short",
+            "enabled": true,
+            "direction": "short",
+            "signal": "SELL",
+            "conditions": [
+                "macd_bearish_cross",
+                "price_touch_upper_band"
+            ],
+            "min_confluence": 1
+        },
+        {
+            "name": "ema_rsi_long",
+            "enabled": true,
+            "direction": "long",
+            "signal": "BUY",
+            "conditions": [
+                "ema_bullish",
+                "rsi_oversold"
+            ],
+            "min_confluence": 1
+        },
+        {
+            "name": "ema_rsi_short",
+            "enabled": true,
+            "direction": "short",
+            "signal": "SELL",
+            "conditions": [
+                "ema_bearish",
+                "rsi_overbought"
+            ],
+            "min_confluence": 1
+        }
+    ]
+}
