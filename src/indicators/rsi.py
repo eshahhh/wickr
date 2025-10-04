@@ -1,6 +1,7 @@
 import pandas as pd
 import pandas_ta as ta
 from .base import BaseIndicator
+import logging
 
 class RSIIndicator(BaseIndicator):
     def __init__(self, period=14):
@@ -12,6 +13,7 @@ class RSIIndicator(BaseIndicator):
         if not self.validate_data(df):
             raise ValueError("DataFrame must contain required OHLCV columns")
         if len(df) < self.period:
+            logging.error("RSI calculation failed: Not enough data points. Have %d, need %d", len(df), self.period)
             raise ValueError(f"Not enough data points. Need at least {self.period} rows")
         rsi_values = ta.rsi(df['close'], length=self.period)
         return rsi_values

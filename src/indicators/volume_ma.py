@@ -1,6 +1,7 @@
 import pandas as pd
 import pandas_ta as ta
 import numpy as np
+import logging
 from .base import BaseIndicator
 
 class VolumeMaIndicator(BaseIndicator):
@@ -18,6 +19,7 @@ class VolumeMaIndicator(BaseIndicator):
             raise ValueError("DataFrame must contain required OHLCV columns")
         
         if len(df) < self.long_period:
+            logging.error("Volume MA calculation failed: Not enough data points. Have %d, need %d", len(df), self.long_period)
             raise ValueError(f"Not enough data points. Need at least {self.long_period} rows")
         
         vol_df = pd.DataFrame(index=df.index)

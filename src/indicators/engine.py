@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+import logging
 from .rsi import RSIIndicator
 from .macd import MACDIndicator
 from .ema import EMAIndicator
@@ -28,15 +29,21 @@ class IndicatorEngine:
         if not self._validate_data(df):
             raise ValueError("DataFrame must contain required OHLCV columns")
         result_df = df.copy()
+        logging.info("IndicatorEngine: Calculating all indicators for %d rows", len(df))
         try:
+            logging.info("Calculating RSI indicator")
             rsi_data = self.indicators['rsi'].calculate(df)
             result_df['rsi'] = rsi_data
+            logging.info("Calculating MACD indicator")
             macd_data = self.indicators['macd'].calculate(df)
             result_df = pd.concat([result_df, macd_data], axis=1)
+            logging.info("Calculating EMA indicator")
             ema_data = self.indicators['ema'].calculate(df)
             result_df = pd.concat([result_df, ema_data], axis=1)
+            logging.info("Calculating Bollinger Bands indicator")
             bb_data = self.indicators['bollinger_bands'].calculate(df)
             result_df = pd.concat([result_df, bb_data], axis=1)
+            logging.info("Calculating Volume MA indicator")
             vol_data = self.indicators['volume_ma'].calculate(df)
             result_df = pd.concat([result_df, vol_data], axis=1)
             return result_df

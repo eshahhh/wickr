@@ -1,6 +1,7 @@
 import pandas as pd
 import pandas_ta as ta
 import numpy as np
+import logging
 from .base import BaseIndicator
 
 class BollingerBandsIndicator(BaseIndicator):
@@ -14,12 +15,21 @@ class BollingerBandsIndicator(BaseIndicator):
         if not self.validate_data(df):
             raise ValueError("DataFrame must contain required OHLCV columns")
         if len(df) < self.period:
+            logging.error("Bollinger Bands calculation failed: Not enough data points. Have %d, need %d", len(df), self.period)
             raise ValueError(f"Not enough data points. Need at least {self.period} rows")
         bb_data = ta.bbands(df['close'], length=self.period, std=self.std_dev)
         bb_df = pd.DataFrame(index=df.index)
-        bb_df['bb_lower'] = bb_data[f'BBL_{self.period}_{self.std_dev}_{self.std_dev}']
-        bb_df['bb_middle'] = bb_data[f'BBM_{self.period}_{self.std_dev}_{self.std_dev}']
-        bb_df['bb_upper'] = bb_data[f'BBU_{self.period}_{self.std_dev}_{self.std_dev}']
+        
+        lower_col = [col for col in bb_data.columns if col.startswith('BBL_')]
+        middle_col = [col for col in bb_data.columns if col.startswith('BBM_')]
+        upper_col = [col for col in bb_data.columns if col.startswith('BBU_')]
+        
+        if not lower_col or not middle_col or not upper_col:
+            raise ValueError(f"Bollinger Bands columns not found. Available columns: {list(bb_data.columns)}")
+        
+        bb_df['bb_lower'] = bb_data[lower_col[0]]
+        bb_df['bb_middle'] = bb_data[middle_col[0]]
+        bb_df['bb_upper'] = bb_data[upper_col[0]]
         bb_df['bb_width'] = (bb_df['bb_upper'] - bb_df['bb_lower']) / bb_df['bb_middle']
         bb_df['bb_percent'] = (df['close'] - bb_df['bb_lower']) / (bb_df['bb_upper'] - bb_df['bb_lower'])
         return bb_df

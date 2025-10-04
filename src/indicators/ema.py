@@ -1,5 +1,6 @@
 import pandas as pd
 import pandas_ta as ta
+import logging
 from .base import BaseIndicator
 
 class EMAIndicator(BaseIndicator):
@@ -14,6 +15,7 @@ class EMAIndicator(BaseIndicator):
         
         max_period = max(self.periods)
         if len(df) < max_period:
+            logging.error("EMA calculation failed: Not enough data points. Have %d, need %d", len(df), max_period)
             raise ValueError(f"Not enough data points. Need at least {max_period} rows")
         
         ema_df = pd.DataFrame(index=df.index)

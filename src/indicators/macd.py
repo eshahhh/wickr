@@ -1,6 +1,7 @@
 import pandas as pd
 import pandas_ta as ta
 from .base import BaseIndicator
+import logging
 
 class MACDIndicator(BaseIndicator):
     def __init__(self, fast_period=12, slow_period=26, signal_period=9):
@@ -20,6 +21,7 @@ class MACDIndicator(BaseIndicator):
         
         min_periods = max(self.slow_period, self.fast_period) + self.signal_period
         if len(df) < min_periods:
+            logging.error("MACD calculation failed: Not enough data points. Have %d, need %d", len(df), min_periods)
             raise ValueError(f"Not enough data points. Need at least {min_periods} rows")
         
         macd_data = ta.macd(
