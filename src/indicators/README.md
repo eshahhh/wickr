@@ -41,3 +41,6 @@ Indicator Engine
 - Composition: The engine wires the individual indicators together to produce an enriched DataFrame of indicator columns, trading signals, regime classification, and a small human-readable summary.
 
 - Signal aggregation: The engine computes signals from the sub-indicators and aggregates them into bullish/bearish counts, strength measures, and a composite integer signal where 2 = strong buy, 1 = moderate buy, 0 = neutral, -1 = moderate sell, -2 = strong sell. Aggregation uses simple logical rules: counts of indicators signaling the same direction, with volume dry-ups suppressing strong signals.
+
+## AI Disclaimer
+This is AI Generated
