@@ -1,0 +1,12 @@
+pytest
+pandas
+numpy
+pandas_ta
+websockets
+flask
+flask-socketio
+flask-cors
+requests
+python-socketio
+eventlet
+python-engineio

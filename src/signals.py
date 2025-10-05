@@ -166,6 +166,7 @@ def evaluate_strategies(indicator_df, conditions, symbol, strategies, signal_set
                 if (timestamp - last_time) < min_interval_delta:
                     continue
             reasons = [condition_reasons.get(condition, condition) for condition in required_conditions]
+            layman_explanation = generate_layman_explanation(signal_name, required_conditions, strategy.get("direction"))
             signal_entry = {
                 "timestamp": timestamp.isoformat() if timestamp else None,
                 "symbol": symbol,
@@ -174,6 +175,7 @@ def evaluate_strategies(indicator_df, conditions, symbol, strategies, signal_set
                 "strategy": strategy.get("name"),
                 "direction": strategy.get("direction"),
                 "reason": reasons,
+                "layman_explanation": layman_explanation,
                 "confluence": confluence_count,
                 "conditions": {condition: row_conditions.get(condition, False) for condition in required_conditions},
                 "indicators": extract_indicator_context(indicator_df.loc[idx]),
@@ -218,6 +220,44 @@ def build_condition_reasons(thresholds):
         "volume_dryup": f"Volume < {volume_thresholds.get('dryup_ratio_max', 0.5)}x long MA",
         "low_volatility": f"BB width < {bollinger_thresholds.get('low_volatility_width', 0.0)}",
     }
+
+def build_layman_explanations():
+    return {
+        "rsi_oversold": "The Relative Strength Index (RSI) indicates that the asset is in an oversold condition, meaning its price has dropped significantly in a short period. This could suggest that the asset is undervalued and might be ready for a potential upward correction or bounce back.",
+        "rsi_overbought": "The Relative Strength Index (RSI) indicates that the asset is in an overbought condition, meaning its price has risen significantly in a short period. This could suggest that the asset is overvalued and might be due for a potential downward correction or pullback.",
+        "macd_bullish_cross": "The Moving Average Convergence Divergence (MACD) indicator shows a bullish crossover, where the MACD line crosses above the signal line. This is often interpreted as a sign of increasing upward momentum and a potential start of an uptrend.",
+        "macd_bearish_cross": "The Moving Average Convergence Divergence (MACD) indicator shows a bearish crossover, where the MACD line crosses below the signal line. This is often interpreted as a sign of increasing downward momentum and a potential start of a downtrend.",
+        "macd_hist_positive": "The MACD histogram, which represents the difference between the MACD line and the signal line, is positive. This suggests that the short-term momentum is stronger than the long-term momentum, indicating bullish strength in the market.",
+        "macd_hist_negative": "The MACD histogram, which represents the difference between the MACD line and the signal line, is negative. This suggests that the short-term momentum is weaker than the long-term momentum, indicating bearish strength in the market.",
+        "ema_bullish": "The Exponential Moving Average (EMA) analysis indicates that the short-term EMA (faster-moving average) is above the long-term EMA (slower-moving average). This is a sign of an upward trend, suggesting that prices are gaining strength over time.",
+        "ema_bearish": "The Exponential Moving Average (EMA) analysis indicates that the short-term EMA (faster-moving average) is below the long-term EMA (slower-moving average). This is a sign of a downward trend, suggesting that prices are losing strength over time.",
+        "price_touch_lower_band": "The price of the asset has touched or come very close to the lower boundary of the Bollinger Bands, which typically represents the lower limit of the asset's normal price range. This could indicate that the asset is undervalued and might be due for a reversal or upward movement.",
+        "price_touch_upper_band": "The price of the asset has touched or come very close to the upper boundary of the Bollinger Bands, which typically represents the upper limit of the asset's normal price range. This could indicate that the asset is overvalued and might be due for a reversal or downward movement.",
+        "volume_spike": "The trading volume has increased significantly compared to its recent average. This indicates heightened market activity, which could be driven by strong buying or selling pressure, often signaling the start of a new trend or a major price movement.",
+        "volume_dryup": "The trading volume has decreased significantly compared to its recent average. This indicates reduced market activity, which could suggest a lack of interest or uncertainty among traders, often preceding a period of consolidation or low volatility.",
+        "low_volatility": "The Bollinger Band width, which measures the difference between the upper and lower bands, is very narrow. This indicates that the price movements have been relatively small recently, suggesting a period of low volatility. Such conditions often precede a breakout or significant price movement in either direction.",
+    }
+
+def generate_layman_explanation(signal_name, required_conditions, direction):
+    """Generate a simple explanation for the trading signal."""
+    layman_map = build_layman_explanations()
+    
+    explanations = []
+    for condition in required_conditions:
+        if condition in layman_map:
+            explanations.append(layman_map[condition])
+    
+    if not explanations:
+        return None
+    
+    intro = "Here's what's happening:\n\n"
+    
+    explanation_text = intro + "\n".join(f"• {exp}" for exp in explanations)
+    
+    if len(explanations) > 1:
+        explanation_text += f"\n\nAll {len(explanations)} of these conditions happening together strengthen this signal."
+    
+    return explanation_text
 
 def normalize_timestamp(value):
     if value is None or (isinstance(value, float) and pd.isna(value)):

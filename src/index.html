@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wickr - Trading Signal Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Raleway:ital,wght@0,100..900;1,100..900&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+</head>
+
+<body class="neutral">
+    <div class="connection-status">
+        <span id="connectionStatus" class="status-disconnected">DISCONNECTED</span>
+    </div>
+
+    <div class="container">
+        <div class="signal-display" id="signalDisplay">NEUTRAL</div>
+
+        <div class="info-panel">
+            <div class="info-section">
+                <h2>Market Information</h2>
+                <div class="info-row">
+                    <span class="info-label">Symbol:</span>
+                    <span class="info-value" id="symbol">BTCUSDT</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Current Price:</span>
+                    <span class="info-value price-display" id="currentPrice">--</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Signal Price:</span>
+                    <span class="info-value" id="signalPrice">--</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Strategy:</span>
+                    <span class="info-value" id="strategy">--</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Direction:</span>
+                    <span class="info-value" id="direction">--</span>
+                </div>
+            </div>
+
+            <div class="info-section">
+                <h2>Signal Reasons</h2>
+                <ul class="reasons-list" id="reasonsList">
+                    <li>Waiting for signal...</li>
+                </ul>
+            </div>
+
+            <div class="info-section">
+                <h2>What Does This Mean?</h2>
+                <div class="layman-explanation" id="laymanExplanation">
+                    Waiting for signal...
+                </div>
+            </div>
+
+            <div class="info-section">
+                <h2>Technical Indicators</h2>
+                <div class="indicators-grid" id="indicatorsGrid">
+                    <div class="indicator-card">
+                        <div class="indicator-label">RSI</div>
+                        <div class="indicator-value" id="rsi">--</div>
+                    </div>
+                    <div class="indicator-card">
+                        <div class="indicator-label">MACD</div>
+                        <div class="indicator-value" id="macd">--</div>
+                    </div>
+                    <div class="indicator-card">
+                        <div class="indicator-label">EMA 12</div>
+                        <div class="indicator-value" id="ema12">--</div>
+                    </div>
+                    <div class="indicator-card">
+                        <div class="indicator-label">Volume Ratio</div>
+                        <div class="indicator-value" id="volRatio">--</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="timestamp" id="lastUpdate">Last update: --</div>
+        </div>
+    </div>
+
+    <footer>
+        <p>
+            Note: The signal indicator thresholds have been slightly adjusted to be more reactive, this is so that the
+            demo looks realistic or else it was normally taking too long to change a signal. The flow is exactly the
+            same and even this still performs decently when doing microtransactions (backtested over last 6 months)
+            however for actual help that works for human trading, the thresholds need to be a bit more strict.
+        </p>
+    </footer>
+
+    <script>
+        const connectionStatus = document.getElementById('connectionStatus');
+        const signalDisplay = document.getElementById('signalDisplay');
+        const currentPrice = document.getElementById('currentPrice');
+        const signalPrice = document.getElementById('signalPrice');
+        const strategy = document.getElementById('strategy');
+        const direction = document.getElementById('direction');
+        const reasonsList = document.getElementById('reasonsList');
+        const laymanSection = document.getElementById('laymanSection');
+        const laymanExplanation = document.getElementById('laymanExplanation');
+        const lastUpdate = document.getElementById('lastUpdate');
+        const rsi = document.getElementById('rsi');
+        const macd = document.getElementById('macd');
+        const ema12 = document.getElementById('ema12');
+        const volRatio = document.getElementById('volRatio');
+
+        const socket = io('http://localhost:5000', {
+            transports: ['websocket', 'polling'],
+            reconnection: true,
+            reconnectionDelay: 1000,
+            reconnectionAttempts: 10
+        });
+
+        socket.on('connect', () => {
+            connectionStatus.textContent = 'CONNECTED';
+            connectionStatus.className = 'status-connected';
+        });
+
+        socket.on('disconnect', (reason) => {
+            connectionStatus.textContent = 'DISCONNECTED';
+            connectionStatus.className = 'status-disconnected';
+        });
+
+        socket.on('connect_error', (error) => {
+            connectionStatus.textContent = 'CONNECTION ERROR';
+            connectionStatus.className = 'status-error';
+        });
+
+        socket.on('price_update', (data) => {
+            if (data.price) {
+                currentPrice.textContent = `$${parseFloat(data.price).toFixed(2)}`;
+            }
+            if (data.timestamp) {
+                lastUpdate.textContent = `Last update: ${new Date(data.timestamp).toLocaleTimeString()}`;
+            }
+        });
+
+        socket.on('signal', (data) => {
+            const signalType = data.signal || 'NEUTRAL';
+            const signalData = data.data || {};
+
+            signalDisplay.textContent = signalType;
+            document.body.className = signalType.toLowerCase();
+
+            if (signalData.price) {
+                signalPrice.textContent = `$${parseFloat(signalData.price).toFixed(2)}`;
+            }
+            if (signalData.strategy) {
+                strategy.textContent = signalData.strategy;
+            }
+            if (signalData.direction) {
+                direction.textContent = signalData.direction;
+            }
+            if (signalData.reason && Array.isArray(signalData.reason)) {
+                reasonsList.innerHTML = '';
+                signalData.reason.forEach(reason => {
+                    const li = document.createElement('li');
+                    li.textContent = reason;
+                    reasonsList.appendChild(li);
+                });
+            }
+            if (signalData.layman_explanation) {
+                laymanExplanation.textContent = signalData.layman_explanation;
+            } else {
+                laymanExplanation.textContent = 'Waiting for signal...';
+            }
+            if (signalData.indicators) {
+                if (signalData.indicators.rsi !== undefined) {
+                    rsi.textContent = signalData.indicators.rsi.toFixed(2);
+                }
+                if (signalData.indicators.macd !== undefined) {
+                    macd.textContent = signalData.indicators.macd.toFixed(4);
+                }
+                if (signalData.indicators.ema_12 !== undefined) {
+                    ema12.textContent = `$${signalData.indicators.ema_12.toFixed(2)}`;
+                }
+                if (signalData.indicators.vol_ratio_long !== undefined) {
+                    volRatio.textContent = signalData.indicators.vol_ratio_long.toFixed(2);
+                }
+            }
+            if (signalData.timestamp) {
+                lastUpdate.textContent = `Last update: ${new Date(signalData.timestamp).toLocaleTimeString()}`;
+            }
+        });
+
+        setInterval(() => {
+            if (socket.connected) {
+                socket.emit('ping');
+            }
+        }, 30000);
+    </script>
+</body>
+
+</html>
